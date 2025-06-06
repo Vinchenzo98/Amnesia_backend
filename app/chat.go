@@ -6,10 +6,13 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	rand "crypto/rand"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 	"time"
+
+	tls "github.com/libp2p/go-libp2p/p2p/transport/tls"
 
 	kyber "github.com/cloudflare/circl/kem/kyber/kyber512"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -34,6 +37,27 @@ func generateQuantumKeys() (*kyber.PublicKey, *kyber.PrivateKey) {
 
 var quantumPublicKey, quantumPrivateKey = generateQuantumKeys()
 
+type ProtocolHandler struct {
+	QUIC   network.StreamHandler
+	WebRTC network.StreamHandler
+	TLS    network.StreamHandler
+}
+
+func NewProtocolHandler() *ProtocolHandler {
+	return &ProtocolHandler{
+		QUIC:   handleQUICStream,
+		WebRTC: handleWebRTCStream,
+		TLS:    handleTLSStream,
+	}
+}
+
+type WebRTCSignal struct {
+	Type   string `json:"type"`
+	SDP    string `json:"sdp,omitempty"`
+	ICE    string `json:"ice,omitempty"`
+	PeerID string `json:"peerId"`
+}
+
 // ───────────────────────────────────────────── dial‑ranking
 
 func preferQUIC(addrs []ma.Multiaddr) []network.AddrDelay {
@@ -54,6 +78,44 @@ func preferQUIC(addrs []ma.Multiaddr) []network.AddrDelay {
 	}
 
 	return result
+}
+
+func handleQUICStream(s network.Stream) {
+	defer s.Close()
+	// Your existing handleStream logic for QUIC
+	buf := bufio.NewReader(s)
+	ct, _ := buf.ReadBytes('\n')
+	msg_decrypt := decryptMessage(ct, quantumPrivateKey)
+	fmt.Println("QUIC: decrypted message: ", msg_decrypt)
+}
+
+func handleWebRTCStream(s network.Stream) {
+	defer s.Close()
+	decoder := json.NewDecoder(s)
+	var signal WebRTCSignal
+	if err := decoder.Decode(&signal); err != nil {
+		log.Printf("WebRTC: Failed to decode signal: %v", err)
+		return
+	}
+	if signal.SDP != "" {
+		decryptedSDP := decryptMessage([]byte(signal.SDP), quantumPrivateKey)
+		signal.SDP = string(decryptedSDP)
+	}
+	if signal.ICE != "" {
+		decryptedICE := decryptMessage([]byte(signal.ICE), quantumPrivateKey)
+		signal.ICE = string(decryptedICE)
+	}
+	// Handle WebRTC signaling
+	fmt.Println("WebRTC: received signaling message from", s.Conn().RemotePeer())
+}
+
+func handleTLSStream(s network.Stream) {
+	defer s.Close()
+	// TLS-specific handling
+	buf := bufio.NewReader(s)
+	ct, _ := buf.ReadBytes('\n')
+	msg_decrypt := decryptMessage(ct, quantumPrivateKey)
+	fmt.Println("TLS: decrypted message: ", msg_decrypt)
 }
 
 func encryptMessage(msg []byte, recipientPubKey *kyber.PublicKey) []byte {
@@ -134,30 +196,60 @@ func peerSend(host host.Host, kad *dht.IpfsDHT, ctx context.Context, peerIDStr s
 	if err != nil {
 		log.Fatal("DHT lookup failed:", err)
 	}
+
 	if err = host.Connect(ctx, info); err != nil {
 		log.Fatal("dial failed:", err)
 	}
-	stream, _ := host.NewStream(ctx, pid, "/pqchat/1.0.0")
-	msgText := "hello world"
-	msg := createMessage(msgText)
-	result := encryptMessage(msg, quantumPublicKey)
-	stream.Write(result)
-	fmt.Println("✔ sent", len(result), "bytes to", pid)
-}
 
-func handleStream(s network.Stream) {
-	defer s.Close()
-	buf := bufio.NewReader(s)
-	ct, _ := buf.ReadBytes('\n')
-	nonce := make([]byte, 24)
-	buf.Read(nonce)
-	msg_decrypt := decryptMessage(ct, quantumPrivateKey)
-	fmt.Println("decrypted message: ", msg_decrypt)
-	fmt.Println("received", len(ct), "bytes (ciphertext)")
+	stream, err := host.NewStream(ctx, pid)
+	if err != nil {
+		log.Printf("Failed to create %s stream: %v", err)
+		return
+	}
+
+	protocol, err := host.Peerstore().FirstSupportedProtocol(pid)
+	if err != nil {
+		log.Printf("Failed to get peer protocols: %v", err)
+	} else {
+		fmt.Printf("Peer supports protocols: %v\n", protocol)
+	}
+
+	switch protocol {
+	case "/webrtc/1.0.0":
+		// WebRTC signaling
+		signal := WebRTCSignal{
+			Type:   "offer",
+			SDP:    "your_sdp_data",
+			ICE:    "your_ice_data",
+			PeerID: host.ID().String(),
+		}
+		if signal.SDP != "" {
+			encryptedSDP := encryptMessage([]byte(signal.SDP), quantumPublicKey)
+			signal.SDP = string(encryptedSDP)
+		}
+		if signal.ICE != "" {
+			encryptedICE := encryptMessage([]byte(signal.ICE), quantumPublicKey)
+			signal.ICE = string(encryptedICE)
+		}
+
+		json.NewEncoder(stream).Encode(signal)
+
+	default:
+		// Regular message encryption for QUIC/TLS
+		msgText := "hello world"
+		msg := createMessage(msgText)
+		result := encryptMessage(msg, quantumPublicKey)
+		stream.Write(result)
+	}
 }
 
 func peerListen(host host.Host) {
-	host.SetStreamHandler("/pqchat/1.0.0", handleStream)
+	handlers := NewProtocolHandler()
+	// Set up protocol-specific handlers
+	host.SetStreamHandler("/quic/1.0.0", handlers.QUIC)
+	host.SetStreamHandler("/webrtc/1.0.0", handlers.WebRTC)
+	host.SetStreamHandler("/tls/1.0.0", handlers.TLS)
+
 	select {}
 }
 
@@ -171,6 +263,7 @@ func main() {
 		libp2p.Identity(isPrivKey),
 		libp2p.Transport(quic.NewTransport),
 		libp2p.Transport(webrtc.New),
+		libp2p.Transport(tls.New),
 		libp2p.SwarmOpts(swarm.WithDialRanker(preferQUIC)),
 	)
 	fmt.Println("★ I am", host.ID())
