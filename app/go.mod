@@ -10,6 +10,10 @@ require (
 )
 
 require (
+	codeberg.org/vula/highctidh v1.0.2024092800 // indirect
+	filippo.io/edwards25519 v1.0.0 // indirect
+	filippo.io/mlkem768 v0.0.0-20240221181710-5ce91625fdc1 // indirect
+	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -21,6 +25,8 @@ require (
 	github.com/elastic/gosigar v0.14.3 // indirect
 	github.com/flynn/noise v1.1.0 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
+	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
+	github.com/go-faster/xor v1.0.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
@@ -31,6 +37,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
+	github.com/henrydcase/nobs v0.0.0-20230313231516-25b66236df73 // indirect
 	github.com/huin/goupnp v1.3.0 // indirect
 	github.com/ipfs/boxo v0.29.1 // indirect
 	github.com/ipfs/go-cid v0.5.0 // indirect
@@ -40,6 +47,12 @@ require (
 	github.com/ipld/go-ipld-prime v0.21.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
+	github.com/katzenpost/chacha20 v0.0.1 // indirect
+	github.com/katzenpost/circl v1.3.9-0.20240222183521-1cd9a34e9a0c // indirect
+	github.com/katzenpost/hpqc v0.0.55 // indirect
+	github.com/katzenpost/katzenpost v0.0.49 // indirect
+	github.com/katzenpost/sntrup4591761 v0.0.0-20231024131303-8755eb1986b8 // indirect
+	github.com/katzenpost/sphincsplus v0.0.2 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/koron/go-ssdp v0.0.5 // indirect
@@ -56,6 +69,7 @@ require (
 	github.com/libp2p/go-yamux/v5 v5.0.0 // indirect
 	github.com/marten-seemann/tcp v0.0.0-20210406111302-dfbc87cc63fd // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/miekg/dns v1.1.63 // indirect
 	github.com/mikioh/tcpinfo v0.0.0-20190314235526-30a79bb1804b // indirect
 	github.com/mikioh/tcpopt v0.0.0-20190314235656-172688c1accc // indirect
@@ -107,6 +121,9 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
+	github.com/x448/float16 v0.8.4 // indirect
+	gitlab.com/yawning/aez.git v0.0.0-20211027044916-e49e68abd344 // indirect
+	gitlab.com/yawning/bsaes.git v0.0.0-20190805113838-0a714cd429ec // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel v1.34.0 // indirect
 	go.opentelemetry.io/otel/metric v1.34.0 // indirect
@@ -119,12 +136,13 @@ require (
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/mod v0.24.0 // indirect
-	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
+	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 )
