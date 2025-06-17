@@ -15,8 +15,7 @@ import (
 	tls "github.com/libp2p/go-libp2p/p2p/transport/tls"
 
 	kyber "github.com/cloudflare/circl/kem/kyber/kyber512"
-	"github.com/katzenpost/hpqc/rand"
-	"github.com/katzenpost/katzenpost/core/log"
+	//"app/mixnet_fallback.go/thin"
 	libp2p "github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	crypto "github.com/libp2p/go-libp2p/core/crypto"
@@ -195,6 +194,18 @@ func createMessage(msgText string) []byte {
 	return msg
 }
 
+// func createMixNet(){
+// 	surbID := thinClient.NewSURBID()
+// 	destNode := /* [32]byte node ID of recipient */
+// 	destQueue := /* []byte queue ID of recipient */
+// 	payload := []byte("Hello via mixnet!")
+
+// 	err := thinClient.SendMessage(surbID, payload, destNode, destQueue)
+// 	if err != nil {
+// 		log.Printf("Mixnet send failed: %v", err)
+// 	}
+// }
+
 func peerSend(host host.Host, kad *dht.IpfsDHT, ctx context.Context, peerIDStr string) {
 	pid, err := peer.Decode(peerIDStr)
 	if err != nil {
@@ -212,7 +223,7 @@ func peerSend(host host.Host, kad *dht.IpfsDHT, ctx context.Context, peerIDStr s
 	stream, err := host.NewStream(ctx, pid)
 	if err != nil {
 		log.Printf("Failed to create %s stream: %v", err)
-		createMixNet()
+		//createMixNet()
 	}
 
 	protocol, err := host.Peerstore().FirstSupportedProtocol(pid)
@@ -249,7 +260,7 @@ func peerSend(host host.Host, kad *dht.IpfsDHT, ctx context.Context, peerIDStr s
 		result := encryptMessage(msg, quantumPublicKey)
 		stream.Write(result)
 		if stream == nil {
-			createMixNet()
+			//createMixNet()
 		}
 	}
 }
@@ -277,12 +288,24 @@ func main() {
 		libp2p.Transport(tls.New),
 		libp2p.SwarmOpts(swarm.WithDialRanker(preferQUIC)),
 	)
+
 	fmt.Println("★ I am", host.ID())
 	for _, a := range host.Addrs() {
 		fmt.Println("  listening on", a)
 	}
 	kad, _ := dht.New(ctx, host, dht.Mode(dht.ModeClient))
 
+	// mixnetCfg := &thin.Config{
+	// SphinxGeometry: /* your geometry config */,
+	// Network:        "tcp",
+	// Address:        "127.0.0.1:12345", // or your mixnet daemon address
+	// }
+	// thinClient := thin.NewThinClient(mixnetCfg, /* logging config */)
+	// err := thinClient.Dial()
+	// if err != nil {
+	// 	log.Fatalf("Failed to connect to mixnet: %v", err)
+	// }
+	// defer thinClient.Close()
 	peerListen(host)
 	peerSend(host, kad, ctx, host.ID().String())
 
